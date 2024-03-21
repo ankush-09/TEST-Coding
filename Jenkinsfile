@@ -1,65 +1,33 @@
-@Library('CleanUp') _ 
-pipeline { 
-    agent any 
-    stages { 
-        stage('Sending Email Before CleanUp')
-        {
+pipeline {
+    agent any
+    stages {
+        stage('Git checkout') {
             steps {
-                script {
-                    sendEmailNotificationbeforecleanup()
-                }
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/ankush-09/TEST-Coding.git']])
             }
         }
-        stage('Workspace Cleanup') {
+        stage('Print workspace') {
             steps {
-                script {
-                    def cleanupResult = workspaceCleanup()
-                    if (cleanupResult == 'SUCCESS') {
-                        echo 'Skipping Build stage'
-                        currentBuild.result = 'SUCCESS'
-                        return
-                    }
-                }
+                sh "ls -a ${WORKSPACE}"
             }
         }
-        stage('Sending Email after CleanUp')
-        {
+        stage('Grype scan') {
             steps {
-                script {
-                    sendEmailNotificationaftercleanup()
-                }
-            }
-        }
-         stage('Build') {
-            steps {
-                script {
-                        if(currentBuild.result != 'SUCCESS')
-                        {
-                        sh './gradlew build' 
-                        }
-                        else
-                        {
-                            echo 'skipping Build'
-                        }
-                    }
-                }
-        }
-        stage('Test') {
-            steps {
-                script {
-                        if(currentBuild.result != 'SUCCESS'){
-                        // Run your unit tests here
-                            junit(testResults: 'build/test-results/test/*.xml', allowEmptyResults: true, skipPublishingChecks: true)
-                            def testResult = sh(returnStatus: true, script: './gradlew test')
-                                if (testResult != 0) {
-                                    error('Unit tests failed. Failing the build.')
-                                }
-                        }
-                        else{
-                            echo 'skipping stage' 
-                        }
-                }
+                grypeScan scanDest: "dir:${WORKSPACE}", repName: 'ScanResult.txt', autoInstall:true
             }
         }
     }
-} 
+    post {
+        always {
+            // Publish HTML report
+            publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: '.',
+                reportFiles: 'ScanResult.txt',
+                reportName: 'Grype Scan Report'
+            ])
+        }
+    }
+}
