@@ -3,9 +3,8 @@ pipeline {
     stages {
         stage('Git checkout') {
             steps {
-                checkout scm
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/ankush-09/TEST-Coding.git']])
             }
-        }
         stage('Print workspace') {
             steps {
                 sh "ls -a ${WORKSPACE}"
