@@ -5,6 +5,7 @@ pipeline {
             steps {
                 checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/ankush-09/TEST-Coding.git']])
             }
+        }
         stage('Print workspace') {
             steps {
                 sh "ls -a ${WORKSPACE}"
@@ -12,10 +13,7 @@ pipeline {
         }
         stage('Grype scan') {
             steps {
-                script {
-                    sh "grype ${WORKSPACE}"
-                }
-            }
+                grypeScan scanDest: "${WORKSPACE}"
         }
     }
     post {
