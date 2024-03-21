@@ -1,22 +1,30 @@
 pipeline {
     agent any
+    
+    environment {
+        GITHUB_REPO = 'ankush-09/TEST-Coding' // Specify the GitHub repository to scan
+    }
+    
     stages {
-        stage('Git checkout') {
+        stage('Clone Repository') {
             steps {
-                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/ankush-09/TEST-Coding.git']])
+                script {
+                    // Clone the public GitHub repository
+                    git url: "https://github.com/${env.GITHUB_REPO}.git"
+                }
             }
         }
-        stage('Print workspace') {
+        
+        stage('Scan for Vulnerabilities') {
             steps {
-                sh "ls -a ${WORKSPACE}"
-            }
-        }
-        stage('Grype scan') {
-            steps {
-                grypeScan scanDest: "${WORKSPACE}", repName: 'ScanResult.txt', autoInstall:true
+                script {
+                    // Run Grype to scan the repository for vulnerabilities
+                    sh "grype ${env.GITHUB_REPO} > ScanResult.txt"
+                }
             }
         }
     }
+    
     post {
         always {
             // Publish HTML report
