@@ -11,9 +11,18 @@ pipeline {
                 sh "ls -a ${WORKSPACE}"
             }
         }
+        stage('Docker build') {
+            steps {
+                script {
+                    docker.build("my-image-name", "-f Dockerfile .")
+                }
+            }
+        }
         stage('Grype scan') {
             steps {
-                grypeScan scanDest: "${WORKSPACE}", repName: 'ScanResult.txt', autoInstall:true
+                script {
+                    sh "grype my-image-name"
+                }
             }
         }
     }
