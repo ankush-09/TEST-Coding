@@ -13,7 +13,8 @@ pipeline {
         }
         stage('Grype scan') {
             steps {
-                grypeScan scanDest: "${WORKSPACE}"
+                grypeScan scanDest: "${WORKSPACE}", repName: 'ScanResult.txt', autoInstall:true
+            }
         }
     }
     post {
@@ -24,10 +25,9 @@ pipeline {
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
                 reportDir: '.',
-                reportFiles: 'grype-report.json',
+                reportFiles: 'ScanResult.txt',
                 reportName: 'Grype Scan Report'
             ])
         }
     }
-  }
 }
